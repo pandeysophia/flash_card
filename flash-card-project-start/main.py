@@ -1,22 +1,35 @@
 from tkinter import *
 import pandas
 import random
-BACKGROUND_COLOR = "#B1DDC6"
 
-data = pandas.read_csv("./data/french_words.csv")
-word_list = data.to_dict(orient="records")
+BACKGROUND_COLOR = "#B1DDC6"
 current_card = {}
+to_learn = {}
+
+try:
+    data = pandas.read_csv("data/words_to_learn.csv")
+except FileNotFoundError:
+    original_data = pandas.read_csv("data/french_words.csv")
+    to_learn = original_data.to_dict(orient="records")
+else:
+    to_learn = data.to_dict(orient="records")
+
 
 
 def next_word():
     global current_card, flip_timer
     window.after_cancel(flip_timer)
-    current_card = random.choice(word_list)
+    current_card = random.choice(to_learn)
     canvas.itemconfig(card_title, text="French", fill="black")
     canvas.itemconfig(card_word, text=current_card["French"], fill="black")
     canvas.itemconfig(canvas_image, image=front_img)
     flip_timer = window.after(3000, func=flip_card)
 
+def is_known():
+    to_learn.remove(current_card)
+    data = pandas.DataFrame(to_learn)
+    data.to_csv("data/words_to_learn.csv", index=False)
+    next_word()
 
 def flip_card():
     canvas.itemconfig(card_title, text="English", fill="white")
@@ -44,7 +57,7 @@ wrong_button = Button(image=wrong_image, highlightthickness=0, relief="flat", bg
 wrong_button.grid(column=0, row=1)
 
 right_image = PhotoImage(file="images/right.png")
-right_button = Button(image=right_image, highlightthickness=0, relief="flat", bg=BACKGROUND_COLOR, command=next_word)
+right_button = Button(image=right_image, highlightthickness=0, relief="flat", bg=BACKGROUND_COLOR, command=is_known)
 right_button.grid(column=1, row=1)
 
 next_word()
